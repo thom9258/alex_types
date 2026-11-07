@@ -54,7 +54,7 @@ int main() {
   object.set(Vehicle{4});
     
   const auto s =
-      v.match([](Car car) { return std::format("Vehicle with {} wheels", car.wheels); },
+      v.match([](Vehicle vehicle) { return std::format("Vehicle with {} wheels", vehicle.wheels); },
               [](Building) { return std::string("Building"); });
   std::println("Object: {}", s);
   return 0;
