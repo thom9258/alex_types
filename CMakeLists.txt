@@ -4,7 +4,7 @@ project(MyHeaderLibrary LANGUAGES CXX)
 add_library(alex_types INTERFACE)
 add_library(alex_types::alex_types ALIAS alex_types)
 
-target_include_directories(my_header_library INTERFACE
+target_include_directories(alex_types INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
