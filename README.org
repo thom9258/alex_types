@@ -1,0 +1,62 @@
+* Alex Types
+
+A tiny collection of C++ types and containers. 
+Alex-Types aims to be minimal and highly optimized, and implements the data structures:
+- inline_string - a string with no heap allocations.
+- tagged_union - a C++ style C union.
+
+
+
+* Examples
+
+** Inline-String
+
+Inline string is meant to provide compile-time string manipulation:
+#+begin_src c++
+inline constexpr const auto home = alex::inline_string("/usr/bob/");
+inline constexpr const auto projects = home + "projects";
+
+int main() {
+    std::println("Projects dir: {}", projects);
+    return 0;
+}
+#+end_src
+
+Inline string is also meant as an inline buffer for strings:
+#+begin_src c++
+struct Person {
+    inline_string<128> name{"?"};
+    int age{0}
+};
+
+auto make_person(std::string_view name, int age) -> std::optional<Person> {
+    auto person = Person{};
+    if (person.name.try_set(name)) {
+        return std::nullopt;
+    }
+
+    person.age = age;
+    return person;
+}
+
+#+end_src
+
+**  Tagged-Union
+
+Tagged-Union is a C union with an indexing system:
+#+begin_src c++
+struct Building {};
+struct Vehicle { int wheels{0}; };
+using Object = tagged_union<Building, Vehicle>;
+
+int main() {
+  auto object = Object{};
+  object.set(Vehicle{4});
+    
+  const auto s =
+      v.match([](Car car) { return std::format("Vehicle with {} wheels", car.wheels); },
+              [](Building) { return std::string("Building"); });
+  std::println("Object: {}", s);
+  return 0;
+}
+#+end_src
