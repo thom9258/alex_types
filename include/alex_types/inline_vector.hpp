@@ -78,7 +78,7 @@ public:
       return std::nullopt;
     }
 
-    value_t popped = std::move(*target);
+    auto popped = std::move(*target);
     _length--;
     return popped;
   }
