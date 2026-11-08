@@ -1,8 +1,8 @@
 #include <alex_types/tagged_union.hpp>
 #include <gtest/gtest.h>
 
-#include <string>
 #include <type_traits>
+#include <print>
 
 using namespace alex;
 

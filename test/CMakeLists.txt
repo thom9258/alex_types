@@ -12,6 +12,7 @@ find_package(GTest REQUIRED)
 set(TESTS
     source/tagged_union_test.cpp
     source/inline_string_test.cpp
+    source/inline_vector_test.cpp
 )
 
 add_executable(${PROJECT_NAME} main.cpp ${TESTS})
