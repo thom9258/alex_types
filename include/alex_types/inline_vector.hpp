@@ -3,8 +3,6 @@
 #include <concepts>
 #include <type_traits>
 
-#include <optional>
-
 namespace alex {
 
 namespace detail {
@@ -72,6 +70,8 @@ public:
 
   constexpr auto last() const -> const_pointer_t { return last(); }
 
+  constexpr auto end() const -> const_pointer_t { return &_buffer[_length]; }
+
   constexpr auto peek(index_t index) -> pointer_t {
     if (empty()) {
       return nullptr;
@@ -103,6 +103,14 @@ public:
 
   constexpr auto peek(index_t index) const -> const_pointer_t {
     return peek(index);
+  }
+
+  constexpr auto pop() -> void;
+
+  constexpr auto reset() -> void {
+    while (!empty()) {
+      pop();
+    }
   }
 
 private:
