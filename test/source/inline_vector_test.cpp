@@ -136,37 +136,3 @@ TEST(inline_vector, last) {
   ASSERT_NE(p, nullptr);
   EXPECT_EQ(*p, 'b');
 }
-
-TEST(inline_vector, pop_empty_returns_nullopt) {
-  auto v = inline_vector<8, char>();
-  ASSERT_TRUE(v.empty());
-  auto p = v.pop();
-  EXPECT_FALSE(p.has_value());
-}
-
-TEST(inline_vector, pop_returns_puts_in_reverse) {
-  auto v = inline_vector<8, char>();
-  v.put('a');
-  v.put('b');
-  v.put('c');
-  v.put('d');
-
-  auto p = v.pop();
-  ASSERT_TRUE(p.has_value());
-  EXPECT_EQ(*p, 'd');
-
-  p = v.pop();
-  ASSERT_TRUE(p.has_value());
-  EXPECT_EQ(*p, 'c');
-
-  p = v.pop();
-  ASSERT_TRUE(p.has_value());
-  EXPECT_EQ(*p, 'b');
-
-  p = v.pop();
-  ASSERT_TRUE(p.has_value());
-  EXPECT_EQ(*p, 'a');
-
-  p = v.pop();
-  EXPECT_FALSE(p.has_value());
-}

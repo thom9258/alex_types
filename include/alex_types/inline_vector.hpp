@@ -72,17 +72,6 @@ public:
 
   constexpr auto last() const -> const_pointer_t { return last(); }
 
-  constexpr auto pop() -> std::optional<value_t> {
-    auto target = last();
-    if (target == nullptr) {
-      return std::nullopt;
-    }
-
-    auto popped = std::move(*target);
-    _length--;
-    return popped;
-  }
-
   constexpr auto peek(index_t index) -> pointer_t {
     if (empty()) {
       return nullptr;
