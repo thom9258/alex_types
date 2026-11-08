@@ -18,7 +18,7 @@ set(TESTS
 
 add_executable(${PROJECT_NAME} main.cpp ${TESTS})
 
-target_include_directories(${PROJECT_NAME} PRIVATE ../include)
+target_include_directories(${PROJECT_NAME} PRIVATE ../../include)
 
 target_link_libraries(${PROJECT_NAME} 
   PRIVATE
