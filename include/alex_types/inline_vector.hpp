@@ -1,31 +1,17 @@
 #pragma once
 
-#include <concepts>
+#include <memory>
 #include <type_traits>
+#include <utility>
 
 namespace alex {
 
-namespace detail {
-template <std::integral T, typename UT = std::make_unsigned_t<T>>
-constexpr auto abs(T v) -> UT {
-  if (v < 0) {
-    return UT{0} - static_cast<UT>(v);
-  }
-
-  return static_cast<UT>(v);
-}
-} // namespace detail
-
-template <std::integral auto N, typename T> class inline_vector {
+template <std::size_t N, typename T> class inline_vector {
 public:
   using length_t = decltype(N);
-  using unsigned_length_t = std::make_unsigned_t<length_t>;
   using index_t = length_t;
   static const constexpr auto max_length_v =
       static_cast<length_t>((N < 1) ? 1 : N);
-
-  static const constexpr bool allows_negative_indexing_v =
-      std::signed_integral<length_t>;
 
   using value_t = T;
   using reference_t = T &;
@@ -33,13 +19,17 @@ public:
   using pointer_t = T *;
   using const_pointer_t = const T *;
 
+  constexpr inline_vector() {}
+
+  constexpr ~inline_vector()
+    requires std::is_trivially_destructible_v<value_t>
+  = default;
+
+  constexpr ~inline_vector() { std::destroy_n(_buffer, _length); }
+
   constexpr auto max_length() const -> length_t { return max_length_v; }
 
   constexpr auto length() const -> length_t { return _length; }
-
-  constexpr auto unsigned_length() const -> unsigned_length_t {
-    return static_cast<unsigned_length_t>(_length);
-  }
 
   constexpr auto unsafe_dataptr() const -> const_pointer_t { return _buffer; }
 
@@ -54,67 +44,69 @@ public:
       return nullptr;
     }
 
-    _buffer[_length] = value;
-    const auto p = &_buffer[_length];
+    std::construct_at(&_buffer[_length], value);
     _length++;
-    return p;
+    return last();
   }
 
-  constexpr auto last() -> pointer_t {
-    if (empty()) {
+  template <typename... Args>
+  constexpr auto emplace(Args &&...args) -> pointer_t {
+    if (full()) {
       return nullptr;
     }
 
-    return &_buffer[_length - 1];
+    std::construct_at(&_buffer[_length], std::forward<Args>(args)...);
+    _length++;
+    return last();
   }
 
-  constexpr auto last() const -> const_pointer_t { return last(); }
+  constexpr auto last() -> pointer_t {
+    return empty() ? nullptr : &_buffer[_length - 1];
+  }
+
+  constexpr auto last() const -> const_pointer_t {
+    return empty() ? nullptr : &_buffer[_length - 1];
+  }
+
+  constexpr auto first() -> pointer_t {
+    return empty() ? nullptr : &_buffer[0];
+  }
+
+  constexpr auto first() const -> const_pointer_t {
+    return empty() ? nullptr : &_buffer[0];
+  }
 
   constexpr auto end() const -> const_pointer_t { return &_buffer[_length]; }
 
   constexpr auto peek(index_t index) -> pointer_t {
-    if (empty()) {
-      return nullptr;
-    }
-
-    if constexpr (allows_negative_indexing_v) {
-      if (index >= length()) {
-        return nullptr;
-      }
-
-      if (index < 0 && detail::abs(index) > unsigned_length()) {
-        return nullptr;
-      }
-
-      if (index < 0) {
-        return &_buffer[length() + index];
-      }
-
-      return &_buffer[index];
-
-    } else {
-      if (index >= length()) {
-        return nullptr;
-      }
-
-      return &_buffer[index];
-    }
+    return in_range(index) ? &_buffer[index] : nullptr;
   }
 
   constexpr auto peek(index_t index) const -> const_pointer_t {
-    return peek(index);
+    return in_range(index) ? &_buffer[index] : nullptr;
   }
 
-  constexpr auto pop() -> void;
+  constexpr auto pop() -> void {
+    if (empty()) {
+      return;
+    }
+
+    std::destroy_at(last());
+    _length--;
+  }
 
   constexpr auto reset() -> void {
-    while (!empty()) {
-      pop();
-    }
+    std::destroy_n(_buffer, _length);
+    _length = 0;
   }
 
 private:
-  value_t _buffer[max_length_v];
+  constexpr auto in_range(index_t index) const -> bool { return index < length(); }
+
+  union { // Defer construction of value_t
+    value_t _buffer[max_length_v];
+  };
+
   length_t _length{0};
 };
 

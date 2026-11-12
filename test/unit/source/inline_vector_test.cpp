@@ -42,97 +42,102 @@ TEST(inline_vector, put_beyond_max_returns_nullptr) {
   EXPECT_EQ(p, nullptr);
 }
 
-TEST(inline_vector, peek_indexes_correctly) {
+TEST(inline_vector, emplace_increments_length) {
+  auto v = inline_vector<10, int>();
+  EXPECT_EQ(v.length(), 0);
+  v.emplace(15);
+  EXPECT_EQ(v.length(), 1);
+  v.emplace(7);
+  EXPECT_EQ(v.length(), 2);
+  v.emplace(30);
+  EXPECT_EQ(v.length(), 3);
+}
+
+struct non_default_constructable {
+  explicit non_default_constructable(int v) : _v{v} {}
+  int _v;
+};
+
+TEST(inline_vector, emplace_works_for_non_default_constructable_types) {
+  auto v = inline_vector<10, non_default_constructable>();
+  v.emplace(3);
+  v.emplace(4);
+  EXPECT_EQ(v.length(), 2);
+}
+
+struct as_mutable {
+  static auto &view(auto &v) { return v; }
+};
+struct as_const {
+  static auto &view(auto &v) { return std::as_const(v); }
+};
+
+template <typename Access>
+class inline_vector_access : public ::testing::Test {};
+
+using access_kinds = ::testing::Types<as_mutable, as_const>;
+TYPED_TEST_SUITE(inline_vector_access, access_kinds);
+
+TYPED_TEST(inline_vector_access, peek_indexes_correctly) {
   auto v = inline_vector<int{4}, char>();
   v.put('a');
   v.put('b');
   v.put('c');
   v.put('d');
-  ASSERT_EQ(v.length(), v.max_length());
 
-  auto p = v.peek(0);
+  auto& view = TypeParam::view(v);
+  ASSERT_EQ(view.length(), view.max_length());
+
+  auto p = view.peek(0);
   ASSERT_NE(p, nullptr);
   EXPECT_EQ(*p, 'a');
 
-  p = v.peek(1);
+  p = view.peek(1);
   ASSERT_NE(p, nullptr);
   EXPECT_EQ(*p, 'b');
 
-  p = v.peek(2);
+  p = view.peek(2);
   ASSERT_NE(p, nullptr);
   EXPECT_EQ(*p, 'c');
 
-  p = v.peek(3);
+  p = view.peek(3);
   ASSERT_NE(p, nullptr);
   EXPECT_EQ(*p, 'd');
 
-  p = v.peek(4);
+  p = view.peek(4);
   ASSERT_EQ(p, nullptr);
 }
 
-TEST(inline_vector, negative_peek_indexes_correctly) {
-  auto v = inline_vector<std::int32_t{4}, char>();
-  v.put('a');
-  v.put('b');
-  v.put('c');
-  v.put('d');
-  ASSERT_EQ(v.length(), v.max_length());
-
-  auto p = v.peek(-1);
-  ASSERT_NE(p, nullptr);
-  EXPECT_EQ(*p, 'd');
-
-  p = v.peek(-2);
-  ASSERT_NE(p, nullptr);
-  EXPECT_EQ(*p, 'c');
-
-  p = v.peek(-3);
-  ASSERT_NE(p, nullptr);
-  EXPECT_EQ(*p, 'b');
-
-  p = v.peek(-4);
-  ASSERT_NE(p, nullptr);
-  EXPECT_EQ(*p, 'a');
-
-  p = v.peek(-5);
-  ASSERT_EQ(p, nullptr);
-}
-
-TEST(inline_vector, negative_peek_returns_nullptr_for_unsigned_length) {
-  auto v = inline_vector<std::uint32_t{4}, char>();
-  v.put('a');
-  v.put('b');
-  v.put('c');
-  v.put('d');
-  ASSERT_EQ(v.length(), v.max_length());
-
-  auto p = v.peek(-1);
-  ASSERT_EQ(p, nullptr);
-
-  p = v.peek(-2);
-  ASSERT_EQ(p, nullptr);
-
-  p = v.peek(-3);
-  ASSERT_EQ(p, nullptr);
-
-  p = v.peek(-4);
-  ASSERT_EQ(p, nullptr);
-
-  p = v.peek(-5);
-  ASSERT_EQ(p, nullptr);
-}
-
-TEST(inline_vector, last) {
+TYPED_TEST(inline_vector_access, last) {
   auto v = inline_vector<8, char>();
-  EXPECT_EQ(v.last(), nullptr);
+  auto& view = TypeParam::view(v);
+
+  EXPECT_EQ(view.last(), nullptr);
 
   v.put('a');
-  auto p = v.last();
+  auto p = view.last();
   ASSERT_NE(p, nullptr);
   EXPECT_EQ(*p, 'a');
 
   v.put('b');
-  p = v.last();
+  p = view.last();
   ASSERT_NE(p, nullptr);
   EXPECT_EQ(*p, 'b');
+}
+
+TYPED_TEST(inline_vector_access, first) {
+  auto v = inline_vector<8, char>();
+  auto& view = TypeParam::view(v);
+
+  EXPECT_EQ(view.first(), nullptr);
+
+  v.put('a');
+  auto p = view.first();
+  ASSERT_NE(p, nullptr);
+  EXPECT_EQ(*p, 'a');
+
+  v.put('b');
+  p = view.first();
+  ASSERT_NE(p, nullptr);
+  EXPECT_EQ(*p, 'a');
 }
